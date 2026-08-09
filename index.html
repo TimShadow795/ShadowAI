@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShadowAI</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background: #000;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+    padding: 8px 4px;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    color: #fff;
+  }
+
+  .page {
+    display: none;
+    min-height: 100vh;
+    padding-top: 60px;
+  }
+
+  .page.active {
+    display: block;
+  }
+
+  #home {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 40px);
+    grid-auto-rows: 40px;
+    gap: 6px;
+    padding: 20px;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .cube {
+    background: #111;
+    border-radius: 4px;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+  }
+
+  .cube:hover {
+    background: #2a2a2a;
+    transform: scale(1.35);
+    z-index: 2;
+  }
+
+  .home-content {
+    position: relative;
+    z-index: 5;
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .home-logo {
+    font-size: 72px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-bottom: 12px;
+  }
+
+  .home-tagline {
+    font-size: 20px;
+    color: #aaa;
+    margin-bottom: 8px;
+  }
+
+  .home-badges {
+    display: flex;
+    gap: 12px;
+    margin: 24px 0 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .badge {
+    background: #111;
+    border: 1px solid #222;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+    color: #ccc;
+  }
+
+  .get-btn {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 16px 42px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .get-btn:hover {
+    transform: scale(1.05);
+  }
+
+  .script-box {
+    margin-top: 30px;
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-family: monospace;
+    font-size: 13px;
+    color: #0f0;
+    max-width: 90%;
+    overflow-x: auto;
+    display: none;
+  }
+
+  .script-box.show {
+    display: block;
+  }
+
+  #stats {
+    padding: 80px 20px 40px;
+  }
+
+  .stats-title {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 50px;
+  }
+
+  .stats-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .stat-card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 18px;
+    padding: 36px 50px;
+    text-align: center;
+    min-width: 200px;
+  }
+
+  .stat-number {
+    font-size: 48px;
+    font-weight: 700;
+  }
+
+  .stat-label {
+    color: #777;
+    margin-top: 8px;
+    font-size: 15px;
+  }
+
+  #games {
+    padding: 80px 20px 40px;
+  }
+
+  .games-title {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #111;
+    border: 1px solid #222;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+    margin: 0 auto 40px;
+    width: fit-content;
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #f00;
+    border-radius: 50%;
+    animation: pulse 1.4s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .games-list {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .game-item {
+    background: #111;
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .game-rank {
+    color: #666;
+    font-size: 14px;
+    min-width: 50px;
+  }
+
+  .game-name {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .game-count {
+    color: #0f0;
+    font-size: 14px;
+  }
+
+  .empty {
+    text-align: center;
+    color: #555;
+    padding: 40px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: #444;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <button class="nav-btn active" onclick="showPage('home')">Home</button>
+  <button class="nav-btn" onclick="showPage('stats')">Live Stats</button>
+  <button class="nav-btn" onclick="showPage('games')">Games</button>
+</nav>
+
+<div id="home" class="page active">
+  <div class="bg-grid" id="grid"></div>
+  <div class="home-content">
+    <div class="home-logo">ShadowAI</div>
+    <div class="home-tagline">Best AI for Roblox.</div>
+    <div class="home-badges">
+      <div class="badge">NO KEY</div>
+      <div class="badge">SUPPORTS SOLARA • XENO</div>
+    </div>
+    <button class="get-btn" onclick="showScript()">Get Script</button>
+    <div class="script-box" id="scriptBox">
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/TimShadow795/ShadowAI/refs/heads/main/AI.lua"))()
+    </div>
+  </div>
+</div>
+<div id="stats" class="page">
+  <div class="stats-title">Live Stats</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number" id="online">—</div>
+      <div class="stat-label">Players Online</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="gamesCount">—</div>
+      <div class="stat-label">Games Playing</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="executions">—</div>
+      <div class="stat-label">Executions</div>
+    </div>
+  </div>
+</div>
+
+<div id="games" class="page">
+  <div class="games-title">Games Playing</div>
+  <div style="text-align:center">
+    <div class="live-badge">
+      <span class="live-dot"></span> LIVE
+    </div>
+  </div>
+  <div class="games-list" id="gamesList">
+    <div class="empty">Loading...</div>
+  </div>
+</div>
+
+<footer>Made by TimShadow</footer>
+
+<script>
+  const grid = document.getElementById('grid');
+  for (let i = 0; i < 300; i++) {
+    const cube = document.createElement('div');
+    cube.className = 'cube';
+    grid.appendChild(cube);
+  }
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function showScript() {
+    const box = document.getElementById('scriptBox');
+    box.classList.add('show');
+    navigator.clipboard.writeText(box.innerText);
+    alert('Script copied to clipboard!');
+  }
+
+  const BIN_ID = "6a78be7bda38895dfecdcd9c";
+  const MASTER_KEY = "$2a$10$e/x2uA7TBtFvjOL4M1vXi.tRDkQ8cSxzy6TDeBZyWEx0I74O/Egli";
+
+  async function loadStats() {
+    try {
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { "X-Master-Key": MASTER_KEY }
+      });
+      const json = await res.json();
+      const users = json.record?.users || {};
+
+      const now = Math.floor(Date.now() / 1000);
+      const games = {};
+      let online = 0;
+
+      for (const info of Object.values(users)) {
+        if (now - (info.time || 0) <= 120) {
+          online++;
+          const name = info.game || "Unknown";
+          games[name] = (games[name] || 0) + 1;
+        }
+      }
+
+      document.getElementById("online").textContent = online;
+      document.getElementById("gamesCount").textContent = Object.keys(games).length;
+      document.getElementById("executions").textContent = online * 3; // пример
+
+      const list = document.getElementById("gamesList");
+      const sorted = Object.entries(games).sort((a, b) => b[1] - a[1]);
+
+      if (sorted.length === 0) {
+        list.innerHTML = `<div class="empty">No one is online right now</div>`;
+      } else {
+        list.innerHTML = sorted.map(([name, count], i) => `
+          <div class="game-item">
+            <span class="game-rank">Top ${i + 1}</span>
+            <span class="game-name">${name}</span>
+            <span class="game-count">${count} playing</span>
+          </div>
+        `).join('');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  loadStats();
+  setInterval(loadStats, 5000);
+</script>
+
+</body>
+</html>
