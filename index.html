@@ -8,7 +8,7 @@
   :root { --bg:#0a0a0a; --card:#111; --border:#1f1f1f; --muted:#888; }
   *{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
   body{background:var(--bg);color:#fff;min-height:100vh}
-  nav{position:fixed;top:0;width:100%;height:60px;background:rgba(10,10,10,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:40px;z-index:100}
+  nav{position:fixed;top:0;width:100%;height:60px;background:rgba(10,10,10,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:36px;z-index:100}
   .nav-btn{background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer}
   .nav-btn.active,.nav-btn:hover{color:#fff}
   .page{display:none;padding-top:80px;min-height:100vh}
@@ -26,14 +26,19 @@
   .stat-card .sub{font-size:13px;color:var(--muted)}
   .games-section{max-width:900px;margin:40px auto;padding:0 20px 60px}
   .game-row{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+  .game-row img{width:42px;height:42px;border-radius:8px;object-fit:cover;background:#222}
   .game-info{flex:1}
   .game-name{font-weight:500}
   .game-bar{height:4px;background:#1a1a1a;border-radius:4px;margin-top:6px;overflow:hidden}
   .game-bar-fill{height:100%;background:linear-gradient(90deg,#00ff9d,#00ccff);border-radius:4px}
-  .game-count{color:var(--muted);font-size:14px;min-width:60px;text-align:right}
+  .game-count{color:var(--muted);font-size:14px;min-width:50px;text-align:right}
   .live{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#ff4444}
   .live::before{content:'';width:7px;height:7px;background:#ff4444;border-radius:50%;animation:pulse 1.2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .premium-box{max-width:600px;margin:40px auto;padding:30px;background:var(--card);border:1px solid var(--border);border-radius:16px}
+  .premium-box h2{margin-bottom:16px}
+  .premium-box ul{margin:16px 0 28px 20px;line-height:1.8;color:#ccc}
+  .buy-btn{background:linear-gradient(90deg,#00ff9d,#00ccff);color:#000;border:none;padding:14px 36px;border-radius:30px;font-weight:700;font-size:15px;cursor:pointer;width:100%}
   footer{text-align:center;padding:40px;color:#333;font-size:13px}
 </style>
 </head>
@@ -42,6 +47,7 @@
   <button class="nav-btn active" onclick="go('home')">Home</button>
   <button class="nav-btn" onclick="go('stats')">Live Stats</button>
   <button class="nav-btn" onclick="go('games')">Games</button>
+  <button class="nav-btn" onclick="go('premium')">Buy Premium</button>
 </nav>
 
 <div id="home" class="page active">
@@ -83,6 +89,20 @@
   </div>
 </div>
 
+<div id="premium" class="page">
+  <div class="premium-box">
+    <h2>ShadowAI Premium</h2>
+    <ul>
+      <li>Unlock DeepSeek, Claude, ChatGPT, Gemini, Codex</li>
+      <li>Battle Mode (AI vs AI script fight)</li>
+      <li>Saved Functions + Copy</li>
+      <li>Priority support</li>
+      <li>HWID locked key (1 device)</li>
+    </ul>
+    <button class="buy-btn" onclick="window.open('https://funpay.com/users/18258793/', '_blank')">Buy Premium Key</button>
+  </div>
+</div>
+
 <footer>Made by TimShadow • <a href="https://timshadow795.github.io/ShadowAI/" style="color:#555">Website</a></footer>
 
 <script>
@@ -112,18 +132,20 @@ async function load(){
       if(now - (u.time||0) <= 150){
         online++;
         const name = u.game || "Unknown";
-        games[name] = (games[name]||0)+1;
+        const placeId = u.placeId || 0;
+        if(!games[name]) games[name] = {count:0, placeId};
+        games[name].count++;
       }
     }
 
-    const sorted = Object.entries(games).sort((a,b)=>b[1]-a[1]);
+    const sorted = Object.entries(games).sort((a,b)=>b[1].count-a[1].count);
     document.getElementById("totalExec").textContent = ((online*8)+2400).toLocaleString();
     document.getElementById("activeGames").textContent = sorted.length;
     document.getElementById("dateSub").textContent = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
     if(sorted[0]){
       document.getElementById("topGame").textContent = sorted[0][0];
-      document.getElementById("topGameCount").textContent = sorted[0][1]+" playing";
+      document.getElementById("topGameCount").textContent = sorted[0][1].count+" playing";
     }
 
     const list = document.getElementById("gamesList");
@@ -131,16 +153,21 @@ async function load(){
       list.innerHTML = `<div style="color:#555;padding:40px;text-align:center">No active players</div>`;
       return;
     }
-    const max = sorted[0][1];
-    list.innerHTML = sorted.map(([name,count],i)=>`
+    const max = sorted[0][1].count;
+    list.innerHTML = sorted.map(([name, info], i)=>{
+      const icon = info.placeId ? 
+        `https://www.roblox.com/asset-thumbnail/image?assetId=${info.placeId}&width=150&height=150&format=png` :
+        "https://via.placeholder.com/42";
+      return `
       <div class="game-row">
+        <img src="${icon}" onerror="this.src='https://via.placeholder.com/42/222/666?text=R'">
         <div class="game-info">
           <div class="game-name">${i+1}. ${name}</div>
-          <div class="game-bar"><div class="game-bar-fill" style="width:${(count/max)*100}%"></div></div>
+          <div class="game-bar"><div class="game-bar-fill" style="width:${(info.count/max)*100}%"></div></div>
         </div>
-        <div class="game-count">${count}</div>
-      </div>
-    `).join('');
+        <div class="game-count">${info.count}</div>
+      </div>`;
+    }).join('');
   }catch(e){console.error(e)}
 }
 load();
